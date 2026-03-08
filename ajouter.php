@@ -1,0 +1,150 @@
+<?php
+require "connexion.php";
+
+if($_SERVER['REQUEST_METHOD'] == 'POST'){
+    $nom = $_POST['nom'];
+    $prenom = $_POST['prenom'];
+    $age = $_POST['age'];
+
+    $stmt = $conn->prepare("INSERT INTO eleves (nom, prenom, age) VALUES (:nom, :prenom, :age)");
+    $stmt->bindParam(':nom', $nom);
+    $stmt->bindParam(':prenom', $prenom);
+    $stmt->bindParam(':age', $age);
+    $stmt->execute();
+
+    header("Location: index.php");
+    exit;
+}
+?>
+
+<h2>Ajouter un élève</h2>
+<form method="post">
+    Nom: <input type="text" name="nom" required><br><br>
+    Prénom: <input type="text" name="prenom" required><br><br>
+    Age: <input type="number" name="age" required><br><br>
+    <input type="submit" value="Ajouter">
+</form>
+<a href="index.php">Retour</a>
+
+<?php 
+$host= 'localhost';
+$user='ketsia.localhost';
+$password='123456';
+$db='enregistrements_eleves';
+?>
+<?php
+$host = "localhost";
+$dbname = "eleve2";  // Assure-vous que la DB existe
+$user = "root";
+$password = "";
+
+try {
+    $conn = new PDO("mysql:host=$host;dbname=$dbname", $user, $password);
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    die("Erreur : " . $e->getMessage());
+}
+?>
+ 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+</body>
+</html>
+<?php
+require "connexion.php";
+?>
+
+<h2>Liste des élèves</h2>
+<a href="ajouter.php">Ajouter un élève</a><br><br>
+
+<?php
+try {
+    $sql = "SELECT * FROM eleves";
+    $result = $conn->query($sql);
+
+    if($result){
+        echo "<table border='1'>";
+        echo "<tr><th>ID</th><th>Nom</th><th>Prénom</th><th>Age</th><th>Action</th></tr>";
+
+        while($row = $result->fetch(PDO::FETCH_ASSOC)){
+            echo "<tr>";
+            echo "<td>" . $row['id'] . "</td>";
+            echo "<td>" . $row['nom'] . "</td>";
+            echo "<td>" . $row['prenom'] . "</td>";
+            echo "<td>" . $row['age'] . "</td>";
+            echo "<td>
+                    <a href='modifier.php?id=" . $row['id'] . "'>Modifier</a> | 
+                    <a href='supprimer.php?id=" . $row['id'] . "' onclick=\"return confirm('Supprimer cet élève ?');\">Supprimer</a>
+                  </td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+    } else {
+        echo "Aucun élève trouvé.";
+    }
+} catch(PDOException $e){
+    echo "Erreur : " . $e->getMessage();
+}
+?>
+<?php
+require "connexion.php";
+
+$id = $_GET['id'];
+
+// Récupérer l’élève
+$stmt = $conn->prepare("SELECT * FROM eleves WHERE id = :id");
+$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+$eleve = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if(!$eleve){
+    die("Élève introuvable !");
+}
+
+// Traitement du formulaire
+if($_SERVER['REQUEST_METHOD'] == 'POST'){
+    $nom = $_POST['nom'];
+    $prenom = $_POST['prenom'];
+    $age = $_POST['age'];
+
+    $stmt = $conn->prepare("UPDATE eleves SET nom=:nom, prenom=:prenom, age=:age WHERE id=:id");
+    $stmt->bindParam(':nom', $nom);
+    $stmt->bindParam(':prenom', $prenom);
+    $stmt->bindParam(':age', $age);
+    $stmt->bindParam(':id', $id);
+    $stmt->execute();
+
+    header("Location: index.php");
+    exit;
+}
+?>
+
+<h2>Modifier l’élève</h2>
+<form method="post">
+    Nom: <input type="text" name="nom" value="<?= htmlspecialchars($eleve['nom']) ?>" required><br><br>
+    Prénom: <input type="text" name="prenom" value="<?= htmlspecialchars($eleve['prenom']) ?>" required><br><br>
+    Age: <input type="number" name="age" value="<?= htmlspecialchars($eleve['age']) ?>" required><br><br>
+    <input type="submit" value="Modifier">
+</form>
+<a href="index.php">Retour</a>
+<?php
+require "connexion.php";
+
+$id = $_GET['id'];
+
+// Supprimer l’élève
+$stmt = $conn->prepare("DELETE FROM eleves WHERE id = :id");
+$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+$stmt->execute();
+
+header("Location: index.php");
+exit;
+?>
